@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>賭け事ゲーム</title>
+    <title>賭け事と投資ゲーム</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -125,28 +125,35 @@
         <button class="button" id="back-slot">メインメニューに戻る</button>
     </div>
 
-    <!-- Investment Scene -->
+    <!-- Investment Scene (Stock Market) -->
     <div id="investment" class="scene">
-        <h1>投資</h1>
+        <h1>投資 (株式市場)</h1>
+        <h2>所持金: <span id="money">1000</span> 円</h2>
+        <h3>保有株数: <span id="owned-stocks">0</span></h3>
+        <p>株の購入/売却数: <input type="number" id="stock-amount" min="1"></p>
+        <button class="button" id="buy-stocks">株を買う</button>
+        <button class="button" id="sell-stocks">株を売る</button>
         <canvas id="stock-graph"></canvas>
-        <button class="button" id="buy-stock">株を買う</button>
-        <button class="button" id="sell-stock">株を売る</button>
         <p id="stock-status"></p>
         <button class="button" id="back-investment">メインメニューに戻る</button>
     </div>
 
     <script>
-        // ローカルストレージに保存されている所持金の確認
+        // Initial setup
         let money = localStorage.getItem('money') ? parseInt(localStorage.getItem('money')) : 1000;
+        let ownedStocks = 0;
+        let stockPrices = JSON.parse(localStorage.getItem('stockPrices')) || [100]; // Initial stock price
         document.getElementById('current-money').textContent = money;
+        document.getElementById('money').textContent = money;
 
         function updateMoney(amount) {
             money += amount;
             document.getElementById('current-money').textContent = money;
+            document.getElementById('money').textContent = money;
             localStorage.setItem('money', money);
         }
 
-        // シーンの切り替え
+        // Scene management
         const scenes = {
             mainMenu: document.getElementById('main-menu'),
             horseRacing: document.getElementById('horse-racing'),
@@ -160,19 +167,19 @@
             toShow.classList.add('visible');
         }
 
-        // メインメニューのボタンのイベントリスナー
+        // Main menu buttons
         document.getElementById('go-horse-race').addEventListener('click', () => switchScene(scenes.horseRacing));
         document.getElementById('go-roulette').addEventListener('click', () => switchScene(scenes.roulette));
         document.getElementById('go-slot').addEventListener('click', () => switchScene(scenes.slotMachine));
         document.getElementById('go-investment').addEventListener('click', () => switchScene(scenes.investment));
 
-        // メインメニューに戻るボタンのイベントリスナー
+        // Return to main menu
         document.getElementById('back-horse').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-roulette').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-slot').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-investment').addEventListener('click', () => switchScene(scenes.mainMenu));
 
-        // 競馬レースロジック
+        // Horse Racing Logic
         const horseOdds = [2.0, 3.0, 5.0, 10.0, 20.0];
         document.getElementById('start-race').addEventListener('click', () => {
             const selectedHorse = document.querySelector('input[name="horse"]:checked');
@@ -180,7 +187,6 @@
             if (selectedHorse && betAmount > 0) {
                 const horseIndex = parseInt(selectedHorse.value) - 1;
 
-                // 競馬レースアニメーション
                 let positions = [0, 0, 0, 0, 0];
                 const raceInterval = setInterval(() => {
                     let winner = null;
@@ -204,7 +210,7 @@
             }
         });
 
-        // ルーレットロジック
+        // Roulette Logic
         document.getElementById('spin-roulette').addEventListener('click', () => {
             const number = parseInt(document.getElementById('roulette-number').value);
             const bet = parseInt(document.getElementById('roulette-bet').value);
@@ -219,7 +225,7 @@
             }
         });
 
-        // スロットマシンロジック
+        // Slot Machine Logic
         document.getElementById('spin-slot').addEventListener('click', () => {
             const bet = parseInt(document.getElementById('slot-bet').value);
             const slotResults = [Math.floor(Math.random() * 7), Math.floor(Math.random() * 7), Math.floor(Math.random() * 7)];
@@ -233,18 +239,16 @@
             }
         });
 
-        // 株価グラフの生成
-        let stockPrice = 100;
+        // Stock Market Logic
         const stockChart = new Chart(document.getElementById('stock-graph'), {
             type: 'line',
             data: {
-                labels: Array(100).fill(''),
+                labels: stockPrices.map((_, i) => `${i * 10}s`),
                 datasets: [{
                     label: '株価',
-                    data: Array(100).fill(stockPrice),
+                    data: stockPrices,
                     borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 2,
-                    fill: false
+                    borderWidth: 2
                 }]
             },
             options: {
@@ -256,25 +260,36 @@
             }
         });
 
-        function updateStockPrice(change) {
-            stockPrice += change;
-            stockChart.data.datasets[0].data.shift();
-            stockChart.data.datasets[0].data.push(stockPrice);
+        document.getElementById('buy-stocks').addEventListener('click', () => {
+            const amount = parseInt(document.getElementById('stock-amount').value);
+            const currentPrice = stockPrices[stockPrices.length - 1];
+            if (amount > 0 && currentPrice * amount <= money) {
+                ownedStocks += amount;
+                updateMoney(-currentPrice * amount);
+                document.getElementById('owned-stocks').textContent = ownedStocks;
+            }
+        });
+
+        document.getElementById('sell-stocks').addEventListener('click', () => {
+            const amount = parseInt(document.getElementById('stock-amount').value);
+            const currentPrice = stockPrices[stockPrices.length - 1];
+            if (amount > 0 && amount <= ownedStocks) {
+                ownedStocks -= amount;
+                updateMoney(currentPrice * amount);
+                document.getElementById('owned-stocks').textContent = ownedStocks;
+            }
+        });
+
+        // Stock price updates every 10 seconds
+        setInterval(() => {
+            const lastPrice = stockPrices[stockPrices.length - 1];
+            const newPrice = Math.max(10, lastPrice + (Math.random() * 20 - 10));
+            stockPrices.push(newPrice);
+            stockChart.data.labels.push(`${stockPrices.length * 10}s`);
             stockChart.update();
-        }
+            localStorage.setItem('stockPrices', JSON.stringify(stockPrices));
+        }, 10000);
 
-        // 株を買う/売るロジック
-        document.getElementById('buy-stock').addEventListener('click', () => {
-            updateMoney(-100);
-            updateStockPrice(Math.random() * 10 - 5);
-            document.getElementById('stock-status').textContent = `現在の株価: ${stockPrice}円`;
-        });
-
-        document.getElementById('sell-stock').addEventListener('click', () => {
-            updateMoney(100);
-            updateStockPrice(Math.random() * 10 - 5);
-            document.getElementById('stock-status').textContent = `現在の株価: ${stockPrice}円`;
-        });
     </script>
 </body>
 </html>
