@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>賭け事と投資ゲーム</title>
+    <title>カイジゲーム</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #ffffff;
+            background-color: #a3dbe1;
             text-align: center;
         }
         .scene {
@@ -50,18 +50,49 @@
             top: 50%;
             transform: translateY(-50%);
         }
+        #debugger {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 100px;
+            font-size: 12px;
+        }
+        #money-display {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            background-color: #fff;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
+    <!-- 常時表示される所持金 -->
+    <div id="money-display">所持金: <span id="current-money">0</span> 円</div>
+
     <!-- Main Menu -->
     <div id="main-menu" class="scene visible">
-        <h1>所持金: <span id="current-money">0</span> 円</h1>
+        <h1>所持金: <span id="current-money-main">0</span> 円</h1>
         <button class="button" id="go-horse-race">競馬場に向かう</button>
         <button class="button" id="go-roulette">ルーレットを回す</button>
         <button class="button" id="go-slot">スロットを回しに行く</button>
         <button class="button" id="go-investment">投資</button>
+        <input type="text" id="debugger" placeholder="デバッグコード入力">
+    </div>
+
+    <!-- Investment Scene -->
+    <div id="investment" class="scene">
+        <h1>投資</h1>
+        <canvas id="stock-graph"></canvas>
+        <p>平均購入価格: <span id="average-stock-price">0</span> 円</p>
+        <button class="button" id="buy-stock">株を買う</button>
+        <button class="button" id="sell-stock">株を売る</button>
+        <p id="stock-status"></p>
+        <button class="button" id="back-investment">メインメニューに戻る</button>
     </div>
 
     <!-- Horse Racing Scene -->
@@ -125,41 +156,26 @@
         <button class="button" id="back-slot">メインメニューに戻る</button>
     </div>
 
-    <!-- Investment Scene (Stock Market) -->
-    <div id="investment" class="scene">
-        <h1>投資 (株式市場)</h1>
-        <h2>所持金: <span id="money">1000</span> 円</h2>
-        <h3>保有株数: <span id="owned-stocks">0</span></h3>
-        <p>株の購入/売却数: <input type="number" id="stock-amount" min="1"></p>
-        <button class="button" id="buy-stocks">株を買う</button>
-        <button class="button" id="sell-stocks">株を売る</button>
-        <canvas id="stock-graph"></canvas>
-        <p id="stock-status"></p>
-        <button class="button" id="back-investment">メインメニューに戻る</button>
-    </div>
-
     <script>
-        // Initial setup
+        // ローカルストレージに保存されている所持金の確認
         let money = localStorage.getItem('money') ? parseInt(localStorage.getItem('money')) : 1000;
-        let ownedStocks = 0;
-        let stockPrices = JSON.parse(localStorage.getItem('stockPrices')) || [100]; // Initial stock price
         document.getElementById('current-money').textContent = money;
-        document.getElementById('money').textContent = money;
+        document.getElementById('current-money-main').textContent = money;
 
         function updateMoney(amount) {
             money += amount;
             document.getElementById('current-money').textContent = money;
-            document.getElementById('money').textContent = money;
+            document.getElementById('current-money-main').textContent = money;
             localStorage.setItem('money', money);
         }
 
-        // Scene management
+        // シーンの切り替え
         const scenes = {
             mainMenu: document.getElementById('main-menu'),
+            investment: document.getElementById('investment'),
             horseRacing: document.getElementById('horse-racing'),
             roulette: document.getElementById('roulette'),
-            slotMachine: document.getElementById('slot-machine'),
-            investment: document.getElementById('investment')
+            slotMachine: document.getElementById('slot-machine')
         };
 
         function switchScene(toShow) {
@@ -167,19 +183,19 @@
             toShow.classList.add('visible');
         }
 
-        // Main menu buttons
+        // メインメニューのボタンのイベントリスナー
         document.getElementById('go-horse-race').addEventListener('click', () => switchScene(scenes.horseRacing));
         document.getElementById('go-roulette').addEventListener('click', () => switchScene(scenes.roulette));
         document.getElementById('go-slot').addEventListener('click', () => switchScene(scenes.slotMachine));
         document.getElementById('go-investment').addEventListener('click', () => switchScene(scenes.investment));
 
-        // Return to main menu
+        // メインメニューに戻るボタンのイベントリスナー
         document.getElementById('back-horse').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-roulette').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-slot').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-investment').addEventListener('click', () => switchScene(scenes.mainMenu));
 
-        // Horse Racing Logic
+        // 競馬レースロジック
         const horseOdds = [2.0, 3.0, 5.0, 10.0, 20.0];
         document.getElementById('start-race').addEventListener('click', () => {
             const selectedHorse = document.querySelector('input[name="horse"]:checked');
@@ -187,6 +203,7 @@
             if (selectedHorse && betAmount > 0) {
                 const horseIndex = parseInt(selectedHorse.value) - 1;
 
+                // 競馬レースアニメーション
                 let positions = [0, 0, 0, 0, 0];
                 const raceInterval = setInterval(() => {
                     let winner = null;
@@ -210,7 +227,7 @@
             }
         });
 
-        // Roulette Logic
+        // ルーレットロジック
         document.getElementById('spin-roulette').addEventListener('click', () => {
             const number = parseInt(document.getElementById('roulette-number').value);
             const bet = parseInt(document.getElementById('roulette-bet').value);
@@ -225,7 +242,7 @@
             }
         });
 
-        // Slot Machine Logic
+        // スロットマシンロジック
         document.getElementById('spin-slot').addEventListener('click', () => {
             const bet = parseInt(document.getElementById('slot-bet').value);
             const slotResults = [Math.floor(Math.random() * 7), Math.floor(Math.random() * 7), Math.floor(Math.random() * 7)];
@@ -239,11 +256,21 @@
             }
         });
 
-        // Stock Market Logic
+        // 投資シーン：株価グラフの生成と更新
+        let ownedStocks = 0;
+        let totalStockSpent = 0; // 投資に使った合計金額
+        let stockPrice = 100; // 初期株価
+        let stockPrices = [stockPrice]; // 株価の履歴
+
+        function updateAverageStockPrice() {
+            const averagePrice = ownedStocks > 0 ? totalStockSpent / ownedStocks : 0;
+            document.getElementById('average-stock-price').textContent = averagePrice.toFixed(2);
+        }
+
         const stockChart = new Chart(document.getElementById('stock-graph'), {
             type: 'line',
             data: {
-                labels: stockPrices.map((_, i) => `${i * 10}s`),
+                labels: stockPrices.map((_, i) => `${i * 10}s`), // 時間の経過を示すラベル
                 datasets: [{
                     label: '株価',
                     data: stockPrices,
@@ -260,36 +287,49 @@
             }
         });
 
-        document.getElementById('buy-stocks').addEventListener('click', () => {
-            const amount = parseInt(document.getElementById('stock-amount').value);
-            const currentPrice = stockPrices[stockPrices.length - 1];
-            if (amount > 0 && currentPrice * amount <= money) {
-                ownedStocks += amount;
-                updateMoney(-currentPrice * amount);
-                document.getElementById('owned-stocks').textContent = ownedStocks;
-            }
-        });
-
-        document.getElementById('sell-stocks').addEventListener('click', () => {
-            const amount = parseInt(document.getElementById('stock-amount').value);
-            const currentPrice = stockPrices[stockPrices.length - 1];
-            if (amount > 0 && amount <= ownedStocks) {
-                ownedStocks -= amount;
-                updateMoney(currentPrice * amount);
-                document.getElementById('owned-stocks').textContent = ownedStocks;
-            }
-        });
-
-        // Stock price updates every 10 seconds
-        setInterval(() => {
+        function updateStockPrice() {
             const lastPrice = stockPrices[stockPrices.length - 1];
-            const newPrice = Math.max(10, lastPrice + (Math.random() * 20 - 10));
+            const newPrice = Math.max(10, lastPrice + (Math.random() * 20 - 10)); // 株価のランダム変動
             stockPrices.push(newPrice);
             stockChart.data.labels.push(`${stockPrices.length * 10}s`);
+            stockChart.data.datasets[0].data.push(newPrice);
             stockChart.update();
-            localStorage.setItem('stockPrices', JSON.stringify(stockPrices));
+            return newPrice;
+        }
+
+        document.getElementById('buy-stock').addEventListener('click', () => {
+            const currentPrice = updateStockPrice();
+            ownedStocks += 1;
+            totalStockSpent += currentPrice;
+            updateMoney(-currentPrice);
+            updateAverageStockPrice();
+            document.getElementById('stock-status').textContent = `株価: ${currentPrice}円で購入しました。`;
+        });
+
+        document.getElementById('sell-stock').addEventListener('click', () => {
+            if (ownedStocks > 0) {
+                const currentPrice = updateStockPrice();
+                ownedStocks -= 1;
+                updateMoney(currentPrice);
+                updateAverageStockPrice();
+                document.getElementById('stock-status').textContent = `株価: ${currentPrice}円で売却しました。`;
+            } else {
+                document.getElementById('stock-status').textContent = "売却できる株がありません。";
+            }
+        });
+
+        // 株価を10秒ごとに更新
+        setInterval(() => {
+            updateStockPrice();
         }, 10000);
 
+        // デバッガー機能
+        document.getElementById('debugger').addEventListener('input', (e) => {
+            if (e.target.value === '777') {
+                updateMoney(10000);
+                e.target.value = ''; // 入力をクリア
+            }
+        });
     </script>
 </body>
 </html>
