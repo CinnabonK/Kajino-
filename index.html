@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>カイジゲーム</title>
+    <title>賭け事ゲーム</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -169,6 +169,78 @@
             localStorage.setItem('money', money);
         }
 
+        // 株価のローカルストレージ管理
+        let ownedStocks = localStorage.getItem('ownedStocks') ? parseInt(localStorage.getItem('ownedStocks')) : 0;
+        let totalStockSpent = localStorage.getItem('totalStockSpent') ? parseInt(localStorage.getItem('totalStockSpent')) : 0;
+        let stockPrices = localStorage.getItem('stockPrices') ? JSON.parse(localStorage.getItem('stockPrices')) : [100]; // 株価の履歴
+        let stockPrice = stockPrices[stockPrices.length - 1]; // 現在の株価
+
+        function updateAverageStockPrice() {
+            const averagePrice = ownedStocks > 0 ? totalStockSpent / ownedStocks : 0;
+            document.getElementById('average-stock-price').textContent = Math.floor(averagePrice);
+        }
+
+        const stockChart = new Chart(document.getElementById('stock-graph'), {
+            type: 'line',
+            data: {
+                labels: stockPrices.map((_, i) => `${i * 10}s`), // 時間の経過を示すラベル
+                datasets: [{
+                    label: '株価',
+                    data: stockPrices,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // 株価の更新（整数に変換）
+        function updateStockPrice() {
+            const lastPrice = stockPrices[stockPrices.length - 1];
+            const newPrice = Math.max(10, Math.floor(lastPrice + (Math.random() * 20 - 10))); // 株価のランダム変動
+            stockPrices.push(newPrice);
+            stockChart.data.labels.push(`${stockPrices.length * 10}s`);
+            stockChart.data.datasets[0].data.push(newPrice);
+            stockChart.update();
+            localStorage.setItem('stockPrices', JSON.stringify(stockPrices)); // 株価履歴を保存
+            return newPrice;
+        }
+
+        // 株価を定期的に20秒ごとに更新
+        setInterval(() => {
+            updateStockPrice();
+        }, 20000); // 20秒ごとに株価を更新
+
+        // 株の売買操作
+        document.getElementById('buy-stock').addEventListener('click', () => {
+            ownedStocks += 1;
+            totalStockSpent += stockPrice;
+            updateMoney(-stockPrice);
+            updateAverageStockPrice();
+            document.getElementById('stock-status').textContent = `株価: ${stockPrice}円で購入しました。`;
+            localStorage.setItem('ownedStocks', ownedStocks);
+            localStorage.setItem('totalStockSpent', totalStockSpent);
+        });
+
+        document.getElementById('sell-stock').addEventListener('click', () => {
+            if (ownedStocks > 0) {
+                ownedStocks -= 1;
+                updateMoney(stockPrice);
+                updateAverageStockPrice();
+                document.getElementById('stock-status').textContent = `株価: ${stockPrice}円で売却しました。`;
+                localStorage.setItem('ownedStocks', ownedStocks);
+                localStorage.setItem('totalStockSpent', totalStockSpent);
+            } else {
+                document.getElementById('stock-status').textContent = "売却できる株がありません。";
+            }
+        });
+
         // シーンの切り替え
         const scenes = {
             mainMenu: document.getElementById('main-menu'),
@@ -256,73 +328,6 @@
             }
         });
 
-        // 投資シーン：株価グラフの生成と更新
-        let ownedStocks = 0;
-        let totalStockSpent = 0; // 投資に使った合計金額
-        let stockPrice = 100; // 初期株価
-        let stockPrices = [stockPrice]; // 株価の履歴
-
-        function updateAverageStockPrice() {
-            const averagePrice = ownedStocks > 0 ? totalStockSpent / ownedStocks : 0;
-            document.getElementById('average-stock-price').textContent = averagePrice.toFixed(2);
-        }
-
-        const stockChart = new Chart(document.getElementById('stock-graph'), {
-            type: 'line',
-            data: {
-                labels: stockPrices.map((_, i) => `${i * 10}s`), // 時間の経過を示すラベル
-                datasets: [{
-                    label: '株価',
-                    data: stockPrices,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        function updateStockPrice() {
-            const lastPrice = stockPrices[stockPrices.length - 1];
-            const newPrice = Math.max(10, lastPrice + (Math.random() * 20 - 10)); // 株価のランダム変動
-            stockPrices.push(newPrice);
-            stockChart.data.labels.push(`${stockPrices.length * 10}s`);
-            stockChart.data.datasets[0].data.push(newPrice);
-            stockChart.update();
-            return newPrice;
-        }
-
-        document.getElementById('buy-stock').addEventListener('click', () => {
-            const currentPrice = updateStockPrice();
-            ownedStocks += 1;
-            totalStockSpent += currentPrice;
-            updateMoney(-currentPrice);
-            updateAverageStockPrice();
-            document.getElementById('stock-status').textContent = `株価: ${currentPrice}円で購入しました。`;
-        });
-
-        document.getElementById('sell-stock').addEventListener('click', () => {
-            if (ownedStocks > 0) {
-                const currentPrice = updateStockPrice();
-                ownedStocks -= 1;
-                updateMoney(currentPrice);
-                updateAverageStockPrice();
-                document.getElementById('stock-status').textContent = `株価: ${currentPrice}円で売却しました。`;
-            } else {
-                document.getElementById('stock-status').textContent = "売却できる株がありません。";
-            }
-        });
-
-        // 株価を10秒ごとに更新
-        setInterval(() => {
-            updateStockPrice();
-        }, 10000);
-
         // デバッガー機能
         document.getElementById('debugger').addEventListener('input', (e) => {
             if (e.target.value === '777') {
@@ -330,6 +335,9 @@
                 e.target.value = ''; // 入力をクリア
             }
         });
+
+        // 初期化時に平均株価を表示
+        updateAverageStockPrice();
     </script>
 </body>
 </html>
