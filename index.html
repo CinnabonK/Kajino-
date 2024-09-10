@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>賭け事ゲーム</title>
+    <title>賭け事ゲーム & 株式市場</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #ffffff;
+            background-color: #a3dbe1;
             text-align: center;
         }
         .scene {
@@ -66,6 +66,11 @@
             padding: 5px 10px;
             border-radius: 10px;
         }
+        input[type="number"] {
+            padding: 5px;
+            font-size: 16px;
+            margin: 5px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -88,10 +93,14 @@
     <div id="investment" class="scene">
         <h1>投資</h1>
         <canvas id="stock-graph"></canvas>
+        <p>現在の株価: <span id="current-stock-price">0</span> 円</p>
         <p>平均購入価格: <span id="average-stock-price">0</span> 円</p>
+        <p>保有株数: <span id="owned-stocks">0</span> 株</p>
+        <input type="number" id="stock-amount" placeholder="株数を入力" min="1">
         <button class="button" id="buy-stock">株を買う</button>
         <button class="button" id="sell-stock">株を売る</button>
         <p id="stock-status"></p>
+        <button class="button" id="clear-investment-history">投資の履歴を全て消す</button>
         <button class="button" id="back-investment">メインメニューに戻る</button>
     </div>
 
@@ -124,7 +133,6 @@
         <input type="number" id="bet-amount" placeholder="賭け金を入力" min="1">
         <button class="button" id="start-race">レースを開始する</button>
         <div id="race-track">
-            <!-- Horse Tracks -->
             <div class="horse-track" id="track-1"><img src="horse.png" class="horse-icon" id="icon-1"></div>
             <div class="horse-track" id="track-2"><img src="horse.png" class="horse-icon" id="icon-2"></div>
             <div class="horse-track" id="track-3"><img src="horse.png" class="horse-icon" id="icon-3"></div>
@@ -157,7 +165,6 @@
     </div>
 
     <script>
-        // ローカルストレージに保存されている所持金の確認
         let money = localStorage.getItem('money') ? parseInt(localStorage.getItem('money')) : 1000;
         document.getElementById('current-money').textContent = money;
         document.getElementById('current-money-main').textContent = money;
@@ -169,21 +176,24 @@
             localStorage.setItem('money', money);
         }
 
-        // 株価のローカルストレージ管理
         let ownedStocks = localStorage.getItem('ownedStocks') ? parseInt(localStorage.getItem('ownedStocks')) : 0;
         let totalStockSpent = localStorage.getItem('totalStockSpent') ? parseInt(localStorage.getItem('totalStockSpent')) : 0;
-        let stockPrices = localStorage.getItem('stockPrices') ? JSON.parse(localStorage.getItem('stockPrices')) : [100]; // 株価の履歴
-        let stockPrice = stockPrices[stockPrices.length - 1]; // 現在の株価
+        let stockPrices = localStorage.getItem('stockPrices') ? JSON.parse(localStorage.getItem('stockPrices')) : [100];
+        let stockPrice = stockPrices[stockPrices.length - 1];
 
         function updateAverageStockPrice() {
             const averagePrice = ownedStocks > 0 ? totalStockSpent / ownedStocks : 0;
             document.getElementById('average-stock-price').textContent = Math.floor(averagePrice);
         }
 
+        function updateOwnedStocksDisplay() {
+            document.getElementById('owned-stocks').textContent = ownedStocks;
+        }
+
         const stockChart = new Chart(document.getElementById('stock-graph'), {
             type: 'line',
             data: {
-                labels: stockPrices.map((_, i) => `${i * 10}s`), // 時間の経過を示すラベル
+                labels: stockPrices.map((_, i) => `${i * 10}s`),
                 datasets: [{
                     label: '株価',
                     data: stockPrices,
@@ -200,48 +210,81 @@
             }
         });
 
-        // 株価の更新（整数に変換）
         function updateStockPrice() {
             const lastPrice = stockPrices[stockPrices.length - 1];
-            const newPrice = Math.max(10, Math.floor(lastPrice + (Math.random() * 20 - 10))); // 株価のランダム変動
+            const newPrice = Math.max(10, Math.floor(lastPrice + (Math.random() * 20 - 10)));
             stockPrices.push(newPrice);
-            stockChart.data.labels.push(`${stockPrices.length * 10}s`);
-            stockChart.data.datasets[0].data.push(newPrice);
+            if (stockPrices.length > 100) {
+                stockPrices.shift();
+            }
+            stockChart.data.labels = stockPrices.map((_, i) => `${i * 10}s`);
+            stockChart.data.datasets[0].data = stockPrices;
             stockChart.update();
-            localStorage.setItem('stockPrices', JSON.stringify(stockPrices)); // 株価履歴を保存
+            localStorage.setItem('stockPrices', JSON.stringify(stockPrices));
+            document.getElementById('current-stock-price').textContent = stockPrice;
             return newPrice;
         }
 
-        // 株価を定期的に20秒ごとに更新
         setInterval(() => {
-            updateStockPrice();
-        }, 20000); // 20秒ごとに株価を更新
+            stockPrice = updateStockPrice();
+        }, 20000);
 
-        // 株の売買操作
         document.getElementById('buy-stock').addEventListener('click', () => {
-            ownedStocks += 1;
-            totalStockSpent += stockPrice;
-            updateMoney(-stockPrice);
+            const stockAmount = parseInt(document.getElementById('stock-amount').value);
+            if (isNaN(stockAmount) || stockAmount <= 0) {
+                alert('購入する株数を正しく入力してください。');
+                return;
+            }
+            const totalCost = stockPrice * stockAmount;
+            if (totalCost > money) {
+                alert(`所持金が不足しています。必要な金額: ${totalCost}円`);
+                return;
+            }
+            ownedStocks += stockAmount;
+            totalStockSpent += totalCost;
+            updateMoney(-totalCost);
             updateAverageStockPrice();
-            document.getElementById('stock-status').textContent = `株価: ${stockPrice}円で購入しました。`;
+            updateOwnedStocksDisplay();
+            document.getElementById('stock-status').textContent = `株価: ${stockPrice}円で${stockAmount}株購入しました。`;
             localStorage.setItem('ownedStocks', ownedStocks);
             localStorage.setItem('totalStockSpent', totalStockSpent);
         });
 
         document.getElementById('sell-stock').addEventListener('click', () => {
-            if (ownedStocks > 0) {
-                ownedStocks -= 1;
-                updateMoney(stockPrice);
-                updateAverageStockPrice();
-                document.getElementById('stock-status').textContent = `株価: ${stockPrice}円で売却しました。`;
-                localStorage.setItem('ownedStocks', ownedStocks);
-                localStorage.setItem('totalStockSpent', totalStockSpent);
-            } else {
-                document.getElementById('stock-status').textContent = "売却できる株がありません。";
+            const stockAmount = parseInt(document.getElementById('stock-amount').value);
+            if (isNaN(stockAmount) || stockAmount <= 0) {
+                alert('売却する株数を正しく入力してください。');
+                return;
             }
+            if (stockAmount > ownedStocks) {
+                alert(`保有株数が不足しています。現在の保有株数: ${ownedStocks}株`);
+                return;
+            }
+            const totalGain = stockPrice * stockAmount;
+            ownedStocks -= stockAmount;
+            updateMoney(totalGain);
+            updateAverageStockPrice();
+            updateOwnedStocksDisplay();
+            document.getElementById('stock-status').textContent = `株価: ${stockPrice}円で${stockAmount}株売却しました。`;
+            localStorage.setItem('ownedStocks', ownedStocks);
+            localStorage.setItem('totalStockSpent', totalStockSpent);
         });
 
-        // シーンの切り替え
+        document.getElementById('clear-investment-history').addEventListener('click', () => {
+            localStorage.removeItem('ownedStocks');
+            localStorage.removeItem('totalStockSpent');
+            localStorage.removeItem('stockPrices');
+            ownedStocks = 0;
+            totalStockSpent = 0;
+            stockPrices = [100];
+            updateOwnedStocksDisplay();
+            updateAverageStockPrice();
+            document.getElementById('stock-status').textContent = '投資の履歴をすべて削除しました。';
+            stockChart.data.labels = stockPrices.map((_, i) => `${i * 10}s`);
+            stockChart.data.datasets[0].data = stockPrices;
+            stockChart.update();
+        });
+
         const scenes = {
             mainMenu: document.getElementById('main-menu'),
             investment: document.getElementById('investment'),
@@ -255,27 +298,25 @@
             toShow.classList.add('visible');
         }
 
-        // メインメニューのボタンのイベントリスナー
         document.getElementById('go-horse-race').addEventListener('click', () => switchScene(scenes.horseRacing));
         document.getElementById('go-roulette').addEventListener('click', () => switchScene(scenes.roulette));
         document.getElementById('go-slot').addEventListener('click', () => switchScene(scenes.slotMachine));
-        document.getElementById('go-investment').addEventListener('click', () => switchScene(scenes.investment));
+        document.getElementById('go-investment').addEventListener('click', () => {
+            switchScene(scenes.investment);
+            updateOwnedStocksDisplay();
+        });
 
-        // メインメニューに戻るボタンのイベントリスナー
         document.getElementById('back-horse').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-roulette').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-slot').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-investment').addEventListener('click', () => switchScene(scenes.mainMenu));
 
-        // 競馬レースロジック
         const horseOdds = [2.0, 3.0, 5.0, 10.0, 20.0];
         document.getElementById('start-race').addEventListener('click', () => {
             const selectedHorse = document.querySelector('input[name="horse"]:checked');
             const betAmount = parseInt(document.getElementById('bet-amount').value);
             if (selectedHorse && betAmount > 0) {
                 const horseIndex = parseInt(selectedHorse.value) - 1;
-
-                // 競馬レースアニメーション
                 let positions = [0, 0, 0, 0, 0];
                 const raceInterval = setInterval(() => {
                     let winner = null;
@@ -299,7 +340,6 @@
             }
         });
 
-        // ルーレットロジック
         document.getElementById('spin-roulette').addEventListener('click', () => {
             const number = parseInt(document.getElementById('roulette-number').value);
             const bet = parseInt(document.getElementById('roulette-bet').value);
@@ -314,7 +354,6 @@
             }
         });
 
-        // スロットマシンロジック
         document.getElementById('spin-slot').addEventListener('click', () => {
             const bet = parseInt(document.getElementById('slot-bet').value);
             const slotResults = [Math.floor(Math.random() * 7), Math.floor(Math.random() * 7), Math.floor(Math.random() * 7)];
@@ -328,16 +367,15 @@
             }
         });
 
-        // デバッガー機能
         document.getElementById('debugger').addEventListener('input', (e) => {
             if (e.target.value === '777') {
                 updateMoney(10000);
-                e.target.value = ''; // 入力をクリア
+                e.target.value = '';
             }
         });
 
-        // 初期化時に平均株価を表示
         updateAverageStockPrice();
+        updateOwnedStocksDisplay();
     </script>
 </body>
 </html>
