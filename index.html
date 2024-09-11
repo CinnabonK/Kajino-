@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>火事のカジノ</title>
+    <title>プログラムß</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #ffffff;
             text-align: center;
         }
+
         .scene {
             display: none;
         }
+
         .visible {
             display: block;
         }
+
         .button {
             margin: 20px;
             padding: 20px;
@@ -26,15 +29,18 @@
             cursor: pointer;
             border-radius: 10px;
         }
+
         #stock-graph {
             background-color: #cce6ff;
             height: 200px;
             margin: 20px;
             width: 80%;
         }
+
         .horse {
             margin: 10px;
         }
+
         .horse-track {
             width: 100%;
             height: 100px;
@@ -43,6 +49,7 @@
             position: relative;
             margin: 20px 0;
         }
+
         .horse-icon {
             width: 50px;
             height: 50px;
@@ -50,6 +57,7 @@
             top: 50%;
             transform: translateY(-50%);
         }
+
         #debugger {
             position: absolute;
             bottom: 10px;
@@ -57,6 +65,7 @@
             width: 100px;
             font-size: 12px;
         }
+
         #money-display {
             position: fixed;
             top: 10px;
@@ -66,18 +75,256 @@
             padding: 5px 10px;
             border-radius: 10px;
         }
+
         input[type="number"] {
             padding: 5px;
             font-size: 16px;
             margin: 5px;
         }
+
+        /* Roulette Styles from Program 1 */
+        :root {
+            --blue: #8BB8D6;
+            --pink: #FA6E59;
+            --orange: #F8A055;
+            --ban-size: 400px;
+            --ban-teihen-width: 108px;
+        }
+
+        body {
+            overflow: hidden;
+        }
+
+        div {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 100%;
+            margin-top: 0;
+            text-align: center;
+        }
+
+        @keyframes roulette {
+            0% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(180deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes roulettehari {
+            0% {
+                border-top-color: rgba(248, 160, 85, 1);
+            }
+            50% {
+                border-top-color: rgba(248, 201, 85, 1);
+            }
+            100% {
+                border-top-color: rgba(248, 160, 85, 1);
+            }
+        }
+
+        @keyframes roulettebtn {
+            0% {
+                background: rgba(248, 160, 85, 1);
+            }
+            50% {
+                background: rgba(248, 201, 85, 1);
+            }
+            100% {
+                background: rgba(248, 160, 85, 1);
+            }
+        }
+
+        #roulette {
+            width: var(--ban-size);
+            margin: 0 auto;
+        }
+
+        .act-start {
+            display: block;
+            margin-bottom: 40px;
+            margin-right: auto;
+            margin-left: auto;
+            width: calc(var(--ban-size) * 0.7);
+            height: 1.8em;
+            border-radius: 0.25em;
+            padding: 20px;
+            background: var(--orange);
+            animation: roulettebtn 0.5s ease-in infinite;
+            animation-play-state: paused;
+        }
+
+        .start_btn:checked + .act-start {
+            animation-play-state: running;
+        }
+
+        .act-start span,
+        .start_btn + .act-start span:before {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .start_btn {
+            display: none;
+        }
+
+        .start_btn + .act-start span:before {
+            content: "スタート！";
+            line-height: 1.8em;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .start_btn:checked + .act-start span:before {
+            content: "ストップ！";
+        }
+
+        #roulette .rltt-body {
+            position: relative;
+            width: var(--ban-size);
+        }
+
+        /* Roulette needle */
+        #roulette .hari {
+            position: absolute;
+            margin-right: auto;
+            margin-left: auto;
+            right: 0;
+            left: 0;
+            top: -20px;
+            bottom: 0;
+            z-index: 10;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 80px solid var(--orange);
+            animation: roulettehari 0.5s ease-in infinite;
+            animation-play-state: paused;
+        }
+
+        #roulette .start_btn:checked + .act-start + .rltt-body .hari {
+            animation-play-state: running;
+        }
+
+        #roulette .rltt {
+            position: relative;
+            width: var(--ban-size);
+            height: var(--ban-size);
+            overflow: hidden;
+            background: #fff;
+            border-radius: var(--ban-size);
+            animation: roulette 1s linear forwards infinite, neonshadow 1s linear infinite;
+            animation-play-state: paused;
+        }
+
+        #roulette .start_btn:checked + .act-start + .rltt-body .rltt {
+            animation-play-state: running;
+        }
+
+        #roulette .rltt .ban,
+        #roulette .rltt .labelgroup {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+            height: var(--ban-size);
+            width: var(--ban-teihen-width);
+        }
+
+        #roulette .rltt .labelgroup div {
+            margin: 0;
+            height: calc(var(--ban-size) / 2);
+            text-align: center;
+            padding-top: 0.5em;
+            opacity: 0.5;
+            font-size: 120%;
+            color: #fff;
+        }
+
+        #roulette .rltt .labelgroup div:nth-child(2) {
+            transform: rotate(180deg);
+        }
+
+        #roulette .rltt .labelgroup:nth-child(1) {
+            transform: rotate(0deg);
+        }
+
+        #roulette .rltt .labelgroup:nth-child(2) {
+            transform: rotate(60deg);
+        }
+
+        #roulette .rltt .labelgroup:nth-child(3) {
+            transform: rotate(120deg);
+        }
+
+        #roulette .rltt .ban:before {
+            content: "";
+            display: block;
+            width: 0;
+            height: 0;
+            border-left: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-right: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-top: calc(var(--ban-size) / 2) solid var(--pink);
+        }
+
+        #roulette .rltt .ban:after {
+            content: "";
+            display: block;
+            width: 0;
+            height: 0;
+            border-left: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-right: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-bottom: calc(var(--ban-size) / 2) solid var(--pink);
+        }
+
+        /* Changing the color for blue roulette */
+        #roulette .rltt .ban.blue:before {
+            border-top-color: var(--blue);
+        }
+
+        #roulette .rltt .ban.blue:after {
+            border-bottom-color: var(--blue);
+        }
+
+        /* Rotation */
+        #roulette .rltt .ban:nth-child(2) {
+            transform: rotate(30deg);
+        }
+
+        #roulette .rltt .ban:nth-child(3) {
+            transform: rotate(60deg);
+        }
+
+        #roulette .rltt .ban:nth-child(4) {
+            transform: rotate(90deg);
+        }
+
+        #roulette .rltt .ban:nth-child(5) {
+            transform: rotate(120deg);
+        }
+
+        #roulette .rltt .ban:nth-child(6) {
+            transform: rotate(150deg);
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-     <h3>made by kiku-kick</h3>
+    <h3>made by kiku-kick</h3>
 </head>
 <body>
 
-    <!-- 常時表示される所持金 -->
+    <!-- Money Display -->
     <div id="money-display">所持金: <span id="current-money">0</span> 円</div>
 
     <!-- Main Menu -->
@@ -110,7 +357,6 @@
     <div id="horse-racing" class="scene">
         <h1>競馬場</h1>
         <p>馬を選んで賭け金を入力してください</p>
-        <p>画像入れてなーーーーーいYo</p>
         <div id="horse-list">
             <div class="horse">
                 <input type="radio" name="horse" value="1" id="horse-1">
@@ -149,11 +395,37 @@
     <!-- Roulette Scene -->
     <div id="roulette" class="scene">
         <h1>ルーレット</h1>
-        <p>ルーレットの数字を選んで賭け金を入力してください</p>
-        <p>まだ細かいのは作ってなーーーーーいYo</p>
-        <p>いつか更新する</p>
         <input type="number" id="roulette-number" placeholder="数字を選択 (0-36)" min="0" max="36">
         <input type="number" id="roulette-bet" placeholder="賭け金を入力" min="1">
+        <input type="checkbox" class="start_btn" id="start_check" />
+        <label class="act-start" for="start_check">
+            <span></span>
+        </label>
+        <div class="rltt-body">
+            <div class="hari"></div>
+            <div class="rltt">
+                <div class="ban pink fas"></div>
+                <div class="ban blue fas"></div>
+                <div class="ban pink fas"></div>
+                <div class="ban blue fas"></div>
+                <div class="ban pink fas"></div>
+                <div class="ban blue fas"></div>
+                <div class="banlabel">
+                    <div class="labelgroup">
+                        <div><i class="fas fa-star"></i></div>
+                        <div><i class="fas fa-star"></i></div>
+                    </div>
+                    <div class="labelgroup">
+                        <div><i class="fas fa-star"></i></div>
+                        <div><i class="fas fa-star"></i></div>
+                    </div>
+                    <div class="labelgroup">
+                        <div><i class="fas fa-star"></i></div>
+                        <div><i class="fas fa-star"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <button class="button" id="spin-roulette">ルーレットを回す</button>
         <p id="roulette-result"></p>
         <button class="button" id="back-roulette">メインメニューに戻る</button>
@@ -162,9 +434,6 @@
     <!-- Slot Machine Scene -->
     <div id="slot-machine" class="scene">
         <h1>スロットマシン</h1>
-        <p>スロットを回すための賭け金を入力してください</p>
-        <p>まだ細かいのは作ってなーーーーーいYo</p>
-        <p>いつか更新する</p>
         <input type="number" id="slot-bet" placeholder="賭け金を入力" min="1">
         <button class="button" id="spin-slot">スロットを回す</button>
         <p id="slot-result"></p>
