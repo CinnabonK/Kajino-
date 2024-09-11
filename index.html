@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>賭け事ゲーム & 株式市場</title>
+    <title>火事のカジノ</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -38,7 +38,7 @@
         .horse-track {
             width: 100%;
             height: 100px;
-            background-color: #23ac38;
+            background-color: #f5f5f5;
             border: 1px solid #ccc;
             position: relative;
             margin: 20px 0;
@@ -71,48 +71,9 @@
             font-size: 16px;
             margin: 5px;
         }
-        /* Roulette Scene Styles */
-        #roulette-container {
-            margin: 50px auto;
-            width: 500px;
-            height: 500px;
-            position: relative;
-            border: 5px solid #ffd700;
-            border-radius: 50%;
-            background-color: #333;
-        }
-        #roulette-wheel {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            border-radius: 50%;
-            transform: rotate(0deg);
-            transition: transform 5s ease-out;
-        }
-        .number {
-            width: 50px;
-            height: 50px;
-            position: absolute;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            font-size: 18px;
-        }
-        .red {
-            background-color: red;
-        }
-        .black {
-            background-color: black;
-        }
-        .green {
-            background-color: green;
-        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <h3>made by kiku-kick</h3>
 </head>
 <body>
 
@@ -122,6 +83,7 @@
     <!-- Main Menu -->
     <div id="main-menu" class="scene visible">
         <h1>所持金: <span id="current-money-main">0</span> 円</h1>
+        <h3>不定期更新-更新時ラグクなるのは、知らん</h3>
         <button class="button" id="go-horse-race">競馬場に向かう</button>
         <button class="button" id="go-roulette">ルーレットを回す</button>
         <button class="button" id="go-slot">スロットを回しに行く</button>
@@ -148,6 +110,7 @@
     <div id="horse-racing" class="scene">
         <h1>競馬場</h1>
         <p>馬を選んで賭け金を入力してください</p>
+        <p>画像入れてなーーーーーいYo</p>
         <div id="horse-list">
             <div class="horse">
                 <input type="radio" name="horse" value="1" id="horse-1">
@@ -183,31 +146,16 @@
         <button class="button" id="back-horse">メインメニューに戻る</button>
     </div>
 
-    <!-- Roulette Scene (Merged) -->
+    <!-- Roulette Scene -->
     <div id="roulette" class="scene">
         <h1>ルーレット</h1>
-        <div id="roulette-container">
-            <div id="roulette-wheel">
-                <div class="number red" style="top: 50px; left: 230px;">32</div>
-                <div class="number black" style="top: 150px; left: 320px;">15</div>
-                <div class="number red" style="top: 270px; left: 330px;">19</div>
-                <div class="number black" style="top: 370px; left: 270px;">4</div>
-                <div class="number green" style="top: 230px; left: 230px;">0</div>
-                <!-- Add more numbers if needed -->
-            </div>
-        </div>
-        <div id="betting-section">
-            <h2>賭けをして下さい</h2>
-            <form id="bet-form">
-                <label for="bet-amount">賭け金額:</label>
-                <input type="number" id="bet-amount" value="100" min="1" max="1000">
-                <br><br>
-                <label for="bet-number">賭ける番号 (0〜36または'red', 'black'):</label>
-                <input type="text" id="bet-number" placeholder="番号を入力">
-            </form>
-            <button class="button" id="spin-btn">ルーレットを回す</button>
-        </div>
-        <div id="roulette-result"></div>
+        <p>ルーレットの数字を選んで賭け金を入力してください</p>
+        <p>まだ細かいのは作ってなーーーーーいYo</p>
+        <p>いつか更新する</p>
+        <input type="number" id="roulette-number" placeholder="数字を選択 (0-36)" min="0" max="36">
+        <input type="number" id="roulette-bet" placeholder="賭け金を入力" min="1">
+        <button class="button" id="spin-roulette">ルーレットを回す</button>
+        <p id="roulette-result"></p>
         <button class="button" id="back-roulette">メインメニューに戻る</button>
     </div>
 
@@ -215,6 +163,8 @@
     <div id="slot-machine" class="scene">
         <h1>スロットマシン</h1>
         <p>スロットを回すための賭け金を入力してください</p>
+        <p>まだ細かいのは作ってなーーーーーいYo</p>
+        <p>いつか更新する</p>
         <input type="number" id="slot-bet" placeholder="賭け金を入力" min="1">
         <button class="button" id="spin-slot">スロットを回す</button>
         <p id="slot-result"></p>
@@ -237,10 +187,6 @@
         let totalStockSpent = localStorage.getItem('totalStockSpent') ? parseInt(localStorage.getItem('totalStockSpent')) : 0;
         let stockPrices = localStorage.getItem('stockPrices') ? JSON.parse(localStorage.getItem('stockPrices')) : [100];
         let stockPrice = stockPrices[stockPrices.length - 1];
-
-        let marketState = 'Boom'; // Initial state
-        let stateDuration = Math.floor(Math.random() * 50) + 50; // Duration in iterations
-        let stateCounter = 0;
 
         function updateAverageStockPrice() {
             const averagePrice = ownedStocks > 0 ? totalStockSpent / ownedStocks : 0;
@@ -273,29 +219,7 @@
 
         function updateStockPrice() {
             const lastPrice = stockPrices[stockPrices.length - 1];
-            let newPrice = lastPrice;
-
-            // Update stock price based on market state
-            if (marketState === 'Boom') {
-                newPrice = Math.max(10, Math.floor(lastPrice + (Math.random() * 20)));
-                stateCounter++;
-                if (stateCounter >= stateDuration) {
-                    newPrice = Math.max(10, Math.floor(newPrice * 0.5)); // Sudden crash
-                    marketState = 'Recession';
-                    stateCounter = 0;
-                    stateDuration = Math.floor(Math.random() * 50) + 50; // New random duration for Recession
-                }
-            } else if (marketState === 'Recession') {
-                newPrice = Math.max(10, Math.floor(lastPrice - (Math.random() * 20)));
-                stateCounter++;
-                if (stateCounter >= stateDuration) {
-                    newPrice = Math.max(10, Math.floor(newPrice * 1.5)); // Sudden recovery
-                    marketState = 'Boom';
-                    stateCounter = 0;
-                    stateDuration = Math.floor(Math.random() * 50) + 50; // New random duration for Boom
-                }
-            }
-
+            const newPrice = Math.max(10, Math.floor(lastPrice + (Math.random() * 20 - 10)));
             stockPrices.push(newPrice);
             if (stockPrices.length > 100) {
                 stockPrices.shift();
@@ -303,12 +227,8 @@
             stockChart.data.labels = stockPrices.map((_, i) => `${i * 10}s`);
             stockChart.data.datasets[0].data = stockPrices;
             stockChart.update();
-
-            // Immediately update the displayed stock price with the most recent value
-            stockPrice = newPrice;
-            document.getElementById('current-stock-price').textContent = stockPrice;
-
             localStorage.setItem('stockPrices', JSON.stringify(stockPrices));
+            document.getElementById('current-stock-price').textContent = stockPrice;
             return newPrice;
         }
 
@@ -428,40 +348,16 @@
         });
 
         document.getElementById('spin-roulette').addEventListener('click', () => {
-            const betNumber = document.getElementById('bet-number').value;
-            const betAmount = parseInt(document.getElementById('bet-amount').value);
-            const randomAngle = Math.floor(Math.random() * 360) + 360; // Minimum one full spin
-            const wheel = document.getElementById('roulette-wheel');
-            let currentAngle = 0;
-            currentAngle += randomAngle;
-            wheel.style.transform = `rotate(${currentAngle}deg)`;
-
-            setTimeout(() => {
-                const result = numbers[Math.floor(Math.random() * numbers.length)];
-                displayResult(result);
-            }, 5000); // Show result after 5 seconds
-
-            function displayResult(result) {
-                let payout = 0;
-                let win = false;
-
-                if (betNumber == result.number) {
-                    win = true;
-                    payout = betAmount * 36;
-                } else if (betNumber === result.color) {
-                    win = true;
-                    payout = betAmount * 2;
-                }
-
-                document.getElementById('roulette-result').textContent = `結果: ${result.number} (${result.color})`;
-
-                if (win) {
-                    document.getElementById('roulette-result').textContent += ` - あなたは ${payout} 円を勝ち取りました！`;
-                    updateMoney(payout);
-                } else {
-                    document.getElementById('roulette-result').textContent += ' - 負けました！';
-                    updateMoney(-betAmount);
-                }
+            const number = parseInt(document.getElementById('roulette-number').value);
+            const bet = parseInt(document.getElementById('roulette-bet').value);
+            const result = Math.floor(Math.random() * 37);
+            document.getElementById('roulette-result').textContent = `結果: ${result}`;
+            if (number === result) {
+                document.getElementById('roulette-result').textContent += ` 勝ちました！${bet * 36}円獲得！`;
+                updateMoney(bet * 36);
+            } else {
+                document.getElementById('roulette-result').textContent += ' 残念！';
+                updateMoney(-bet);
             }
         });
 
@@ -479,7 +375,7 @@
         });
 
         document.getElementById('debugger').addEventListener('input', (e) => {
-            if (e.target.value === '777') {
+            if (e.target.value === '12345') {
                 updateMoney(10000);
                 e.target.value = '';
             }
