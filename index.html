@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>プログラムß</title>
+    <title>火事のカジノ</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #ffffff;
             text-align: center;
-            overflow-y: auto;
+            overflow-y: auto; /* Scroll Fix */
         }
 
         .scene {
@@ -31,11 +31,6 @@
             border-radius: 10px;
         }
 
-        .disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
         #stock-graph {
             background-color: #cce6ff;
             height: 200px;
@@ -43,16 +38,8 @@
             width: 80%;
         }
 
-        table {
-            width: 80%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: center;
+        .horse {
+            margin: 10px;
         }
 
         .horse-track {
@@ -72,6 +59,14 @@
             transform: translateY(-50%);
         }
 
+        #debugger {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 100px;
+            font-size: 12px;
+        }
+
         #money-display {
             position: fixed;
             top: 10px;
@@ -82,147 +77,241 @@
             border-radius: 10px;
         }
 
-        input[type="number"], input[type="text"] {
+        input[type="number"] {
             padding: 5px;
             font-size: 16px;
             margin: 5px;
         }
 
+        /* Roulette Styles */
+        :root {
+            --blue: #8BB8D6;
+            --pink: #FA6E59;
+            --orange: #F8A055;
+            --ban-size: 400px;
+            --ban-teihen-width: 108px;
+        }
+
         #roulette {
-            width: 400px;
+            width: var(--ban-size);
             margin: 0 auto;
         }
 
-        #roulette .act-start {
+        .act-start {
             display: block;
             margin-bottom: 40px;
-            width: 70%;
+            margin-right: auto;
+            margin-left: auto;
+            width: calc(var(--ban-size) * 0.7);
             height: 1.8em;
             border-radius: 0.25em;
             padding: 20px;
-            background-color: #6fbced;
-            cursor: pointer;
-            color: white;
+            background: var(--orange);
+            animation: roulettebtn 0.5s ease-in infinite;
+            animation-play-state: paused;
         }
 
-        #roulette .rltt {
-            position: relative;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            overflow: hidden;
-            margin: 0 auto;
+        .start_btn:checked + .act-start {
+            animation-play-state: running;
         }
 
-        #roulette .segment {
-            position: absolute;
+        .act-start span,
+        .start_btn + .act-start span:before {
+            display: block;
             width: 100%;
             height: 100%;
-            transform-origin: center;
-            clip-path: polygon(50% 50%, 100% 0%, 100% 100%);
         }
 
-        #roulette .segment:nth-child(1) {
-            background-color: yellow;
-            transform: rotate(0deg);
+        .start_btn {
+            display: none;
         }
 
-        #roulette .segment:nth-child(2),
-        #roulette .segment:nth-child(3),
-        #roulette .segment:nth-child(4) {
-            background-color: blue;
-            transform: rotate(60deg);
+        .start_btn + .act-start span:before {
+            content: "スタート！";
+            line-height: 1.8em;
+            vertical-align: middle;
+            text-align: center;
         }
 
-        #roulette .segment:nth-child(5),
-        #roulette .segment:nth-child(6),
-        #roulette .segment:nth-child(7),
-        #roulette .segment:nth-child(8),
-        #roulette .segment:nth-child(9) {
-            background-color: red;
-            transform: rotate(120deg);
+        .start_btn:checked + .act-start span:before {
+            content: "ストップ！";
         }
 
-        .roulette-container {
+        #roulette .rltt-body {
             position: relative;
+            width: var(--ban-size);
         }
 
-        .pointer {
+        /* Roulette needle */
+        #roulette .hari {
             position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            margin-right: auto;
+            margin-left: auto;
+            right: 0;
+            left: 0;
+            top: -20px;
+            bottom: 0;
+            z-index: 10;
             width: 0;
             height: 0;
             border-left: 10px solid transparent;
             border-right: 10px solid transparent;
-            border-bottom: 20px solid black;
+            border-top: 80px solid var(--orange);
+            animation: roulettehari 0.5s ease-in infinite;
+            animation-play-state: paused;
         }
 
-        #debugger {
-            margin: 20px 0;
+        #roulette .start_btn:checked + .act-start + .rltt-body .hari {
+            animation-play-state: running;
+        }
+
+        #roulette .rltt {
+            position: relative;
+            width: var(--ban-size);
+            height: var(--ban-size);
+            overflow: hidden;
+            background: #fff;
+            border-radius: var(--ban-size);
+            animation: roulette 1s linear forwards infinite, neonshadow 1s linear infinite;
+            animation-play-state: paused;
+        }
+
+        #roulette .start_btn:checked + .act-start + .rltt-body .rltt {
+            animation-play-state: running;
+        }
+
+        #roulette .rltt .ban,
+        #roulette .rltt .labelgroup {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
+            height: var(--ban-size);
+            width: var(--ban-teihen-width);
+        }
+
+        #roulette .rltt .labelgroup div {
+            margin: 0;
+            height: calc(var(--ban-size) / 2);
+            text-align: center;
+            padding-top: 0.5em;
+            opacity: 0.5;
+            font-size: 120%;
+            color: #fff;
+        }
+
+        #roulette .rltt .labelgroup div:nth-child(2) {
+            transform: rotate(180deg);
+        }
+
+        #roulette .rltt .labelgroup:nth-child(1) {
+            transform: rotate(0deg);
+        }
+
+        #roulette .rltt .labelgroup:nth-child(2) {
+            transform: rotate(60deg);
+        }
+
+        #roulette .rltt .labelgroup:nth-child(3) {
+            transform: rotate(120deg);
+        }
+
+        #roulette .rltt .ban:before {
+            content: "";
+            display: block;
+            width: 0;
+            height: 0;
+            border-left: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-right: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-top: calc(var(--ban-size) / 2) solid var(--pink);
+        }
+
+        #roulette .rltt .ban:after {
+            content: "";
+            display: block;
+            width: 0;
+            height: 0;
+            border-left: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-right: calc(var(--ban-teihen-width) / 2) solid transparent;
+            border-bottom: calc(var(--ban-size) / 2) solid var(--pink);
+        }
+
+        /* Changing the color for blue roulette */
+        #roulette .rltt .ban.blue:before {
+            border-top-color: var(--blue);
+        }
+
+        #roulette .rltt .ban.blue:after {
+            border-bottom-color: var(--blue);
+        }
+
+        /* Rotation */
+        #roulette .rltt .ban:nth-child(2) {
+            transform: rotate(30deg);
+        }
+
+        #roulette .rltt .ban:nth-child(3) {
+            transform: rotate(60deg);
+        }
+
+        #roulette .rltt .ban:nth-child(4) {
+            transform: rotate(90deg);
+        }
+
+        #roulette .rltt .ban:nth-child(5) {
+            transform: rotate(120deg);
+        }
+
+        #roulette .rltt .ban:nth-child(6) {
+            transform: rotate(150deg);
+        }
+
+        .number-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: black;
+            font-size: 3rem;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <h3>made by kiku-kick</h3>
+     <h3>made by kiku-kick</h3>
 </head>
 <body>
 
-    <!-- 所持金表示 -->
+    <!-- Money Display -->
     <div id="money-display">所持金: <span id="current-money">0</span> 円</div>
 
-    <!-- メインメニュー -->
+    <!-- Main Menu -->
     <div id="main-menu" class="scene visible">
         <h1>所持金: <span id="current-money-main">0</span> 円</h1>
-        <h3>ゲームメニュー</h3>
+        <h3>不定期更新-更新時ラグクなるのは、知らん</h3>
         <button class="button" id="go-horse-race">競馬場に向かう</button>
+        <button class="button" id="go-roulette">ルーレットを回す</button>
+        <button class="button" id="go-slot">スロットを回しに行く</button>
         <button class="button" id="go-investment">投資</button>
-        <button class="button" id="go-settings">設定</button>
-        <button class="button" id="claim-daily-reward">デイリー報酬を受け取る</button>
-    </div>
-
-    <!-- 設定画面 -->
-    <div id="settings" class="scene">
-        <h1>設定</h1>
         <input type="text" id="debugger" placeholder="デバッグコード入力">
-        <button class="button" id="nan-to-money">NaNを1000コイン返還</button>
-        <button class="button" id="back-settings">メインメニューに戻る</button>
     </div>
 
-    <!-- 投資画面 -->
+    <!-- Investment Scene -->
     <div id="investment" class="scene">
         <h1>投資</h1>
         <canvas id="stock-graph"></canvas>
-        <table>
-            <thead>
-                <tr>
-                    <th>銘柄</th>
-                    <th>株価</th>
-                    <th>保有株数</th>
-                    <th>平均購入価格</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>株A</td>
-                    <td><span id="stockA-price">0</span> 円</td>
-                    <td><span id="owned-stocksA">0</span> 株</td>
-                    <td><span id="average-stockA-price">0</span> 円</td>
-                </tr>
-                <tr>
-                    <td>株B</td>
-                    <td><span id="stockB-price">0</span> 円</td>
-                    <td><span id="owned-stocksB">0</span> 株</td>
-                    <td><span id="average-stockB-price">0</span> 円</td>
-                </tr>
-                <tr>
-                    <td>株C</td>
-                    <td><span id="stockC-price">0</span> 円</td>
-                    <td><span id="owned-stocksC">0</span> 株</td>
-                    <td><span id="average-stockC-price">0</span> 円</td>
-                </tr>
-            </tbody>
-        </table>
+        <p>現在の株価:</p>
+        <div id="stocks-display">
+            <p>stockA 株価: <span id="stockA-price">0</span> 円</p>
+            <p>stockB 株価: <span id="stockB-price">0</span> 円</p>
+            <p>stockC 株価: <span id="stockC-price">0</span> 円</p>
+        </div>
+        <p>平均購入価格 (株A): <span id="average-stockA-price">0</span> 円</p>
+        <p>平均購入価格 (株B): <span id="average-stockB-price">0</span> 円</p>
+        <p>平均購入価格 (株C): <span id="average-stockC-price">0</span> 円</p>
+        <p>保有株数 (株A): <span id="owned-stocksA">0</span> 株</p>
+        <p>保有株数 (株B): <span id="owned-stocksB">0</span> 株</p>
+        <p>保有株数 (株C): <span id="owned-stocksC">0</span> 株</p>
         <input type="number" id="stock-amount" placeholder="株数を入力" min="1">
         <select id="stock-type">
             <option value="stockA">株A</option>
@@ -236,7 +325,7 @@
         <button class="button" id="back-investment">メインメニューに戻る</button>
     </div>
 
-    <!-- 競馬場 -->
+    <!-- Horse Racing Scene -->
     <div id="horse-racing" class="scene">
         <h1>競馬場</h1>
         <p>馬を選んで賭け金を入力してください</p>
@@ -251,15 +340,15 @@
             </div>
             <div class="horse">
                 <input type="radio" name="horse" value="3" id="horse-3">
-                <label for="horse-3">ユニコーン(オッズ: 5.0)</label>
+                <label for="horse-3">馬3 (オッズ: 5.0)</label>
             </div>
             <div class="horse">
                 <input type="radio" name="horse" value="4" id="horse-4">
-                <label for="horse-4">マケタラバサシ(オッズ: 10.0)</label>
+                <label for="horse-4">馬4 (オッズ: 10.0)</label>
             </div>
             <div class="horse">
                 <input type="radio" name="horse" value="5" id="horse-5">
-                <label for="horse-5">ヤミー(オッズ: 20.0)</label>
+                <label for="horse-5">馬5 (オッズ: 20.0)</label>
             </div>
         </div>
         <input type="number" id="bet-amount" placeholder="賭け金を入力" min="1">
@@ -275,40 +364,31 @@
         <button class="button" id="back-horse">メインメニューに戻る</button>
     </div>
 
-    <!-- ルーレット -->
- <div id="roulette" class="scene">
-    <h1>ルーレット</h1>
-    <input type="number" id="roulette-bet" placeholder="賭け金を入力" min="1">
-
-    <!-- ルーレットコンテナ -->
-    <div class="roulette-container">
-        <div class="rltt" id="roulette-wheel">
-            <!-- 赤色: 10倍 -->
-            <div class="segment red" data-multiplier="10"></div>
-            <div class="segment blue" data-multiplier="2"></div>
-            <div class="segment yellow" data-multiplier="5"></div>
-            <div class="segment white" data-multiplier="-2"></div>
-            <div class="segment blue" data-multiplier="2"></div>
-            <div class="segment red" data-multiplier="10"></div>
-            <div class="segment white" data-multiplier="-2"></div>
-            <div class="segment yellow" data-multiplier="5"></div>
-            <div class="segment blue" data-multiplier="2"></div>
-            <div class="segment red" data-multiplier="10"></div>
-            <div class="segment white" data-multiplier="-2"></div>
+    <!-- Roulette Scene -->
+    <div id="roulette" class="scene">
+        <h1>ルーレット</h1>
+        <input type="number" id="roulette-number" placeholder="数字を選択 (0-6)" min="1" max="6">
+        <input type="number" id="roulette-bet" placeholder="賭け金を入力" min="1">
+        <input type="checkbox" class="start_btn" id="start_check" />
+        <label class="act-start" for="start_check">
+            <span></span>
+        </label>
+        <div class="rltt-body">
+            <div class="hari"></div>
+            <div class="rltt">
+                <div class="ban pink fas"><div class="number-display">1</div></div>
+                <div class="ban blue fas"><div class="number-display">2</div></div>
+                <div class="ban pink fas"><div class="number-display">3</div></div>
+                <div class="ban blue fas"><div class="number-display">4</div></div>
+                <div class="ban pink fas"><div class="number-display">5</div></div>
+                <div class="ban blue fas"><div class="number-display">6</div></div>
+            </div>
         </div>
-        <div class="pointer"></div>
+        <p id="roulette-result"></p>
+        <button class="button" id="back-roulette">メインメニューに戻る</button>
     </div>
 
-    <!-- スタート＆ストップボタン -->
-    <button class="button" id="start-roulette">ルーレットを回す</button>
-    <button class="button" id="stop-roulette" disabled>ストップ</button>
-
-    <p id="roulette-result"></p>
-    <button class="button" id="back-roulette">メインメニューに戻る</button>
-</div>
-
-
-    <!-- スロットマシン -->
+    <!-- Slot Machine Scene -->
     <div id="slot-machine" class="scene">
         <h1>スロットマシン</h1>
         <input type="number" id="slot-bet" placeholder="賭け金を入力" min="1">
@@ -329,35 +409,6 @@
             localStorage.setItem('money', money);
         }
 
-        // デイリー報酬機能
-        document.getElementById('claim-daily-reward').addEventListener('click', () => {
-            const lastClaim = localStorage.getItem('lastDailyReward');
-            const now = new Date();
-            if (lastClaim) {
-                const lastDate = new Date(lastClaim);
-                const diff = now - lastDate;
-                const oneDay = 24 * 60 * 60 * 1000;
-                if (diff < oneDay) {
-                    alert("デイリー報酬は1日1回のみです。");
-                    return;
-                }
-            }
-            updateMoney(500); // デイリー報酬額
-            localStorage.setItem('lastDailyReward', now);
-            alert("500円のデイリー報酬を受け取りました！");
-        });
-
-        // NaNを1000コイン返還
-        document.getElementById('nan-to-money').addEventListener('click', () => {
-            if (isNaN(money)) {
-                money = 1000;
-                document.getElementById('current-money').textContent = money;
-                localStorage.setItem('money', money);
-                alert("NaNを1000コインに修正しました。");
-            }
-        });
-
-        // 保有株数の管理
         let ownedStocks = {
             stockA: { amount: 0, totalSpent: 0 },
             stockB: { amount: 0, totalSpent: 0 },
@@ -479,6 +530,7 @@
             updateAverageStockPrice('stockB');
             updateAverageStockPrice('stockC');
             document.getElementById('stock-status').textContent = '投資の履歴をすべて削除しました。';
+            displayStockPrices();
         });
 
         const scenes = {
@@ -486,8 +538,7 @@
             investment: document.getElementById('investment'),
             horseRacing: document.getElementById('horse-racing'),
             roulette: document.getElementById('roulette'),
-            slotMachine: document.getElementById('slot-machine'),
-            settings: document.getElementById('settings')
+            slotMachine: document.getElementById('slot-machine')
         };
 
         function switchScene(toShow) {
@@ -504,9 +555,6 @@
             updateOwnedStocksDisplay('stockB');
             updateOwnedStocksDisplay('stockC');
         });
-
-        document.getElementById('go-settings').addEventListener('click', () => switchScene(scenes.settings));
-        document.getElementById('back-settings').addEventListener('click', () => switchScene(scenes.mainMenu));
 
         document.getElementById('back-horse').addEventListener('click', () => switchScene(scenes.mainMenu));
         document.getElementById('back-roulette').addEventListener('click', () => switchScene(scenes.mainMenu));
@@ -550,58 +598,37 @@
                 alert('正しい馬と賭け金を選んでください！');
             }
         });
-// ルーレット変数
-let isSpinning = false;
-let currentRotation = 0;
-let spinInterval;
 
-document.getElementById('start-roulette').addEventListener('click', () => {
-    const betAmount = parseInt(document.getElementById('roulette-bet').value);
+        document.getElementById('spin-roulette').addEventListener('click', () => {
+            const number = parseInt(document.getElementById('roulette-number').value);
+            const bet = parseInt(document.getElementById('roulette-bet').value);
+            const result = Math.floor(Math.random() * 6) + 1;  // 1〜6の数字
+            const odds = [2, 3, 1.5, 4, 5, 6];  // 各セグメントの倍率
 
-    if (isNaN(betAmount) || betAmount <= 0) {
-        alert('賭け金を入力してください');
-        return;
-    }
+            document.getElementById('roulette-result').textContent = `結果: ${result}`;
+            if (number === result) {
+                const winnings = bet * odds[result - 1];
+                document.getElementById('roulette-result').textContent += ` 勝ちました！${winnings}円獲得！`;
+                updateMoney(winnings);
+            } else {
+                document.getElementById('roulette-result').textContent += ' 残念！';
+                updateMoney(-bet);
+            }
+        });
 
-    document.getElementById('start-roulette').disabled = true;
-    document.getElementById('stop-roulette').disabled = false;
+        document.getElementById('spin-slot').addEventListener('click', () => {
+            const bet = parseInt(document.getElementById('slot-bet').value);
+            const slotResults = [Math.floor(Math.random() * 7), Math.floor(Math.random() * 7), Math.floor(Math.random() * 7)];
+            document.getElementById('slot-result').textContent = `結果: ${slotResults.join(' - ')}`;
+            if (slotResults[0] === slotResults[1] && slotResults[1] === slotResults[2]) {
+                document.getElementById('slot-result').textContent += ` 勝ちました！${bet * 10}円獲得！`;
+                updateMoney(bet * 10);
+            } else {
+                document.getElementById('slot-result').textContent += ' 残念！';
+                updateMoney(-bet);
+            }
+        });
 
-    // ルーレットを回転させる
-    isSpinning = true;
-    spinInterval = setInterval(() => {
-        currentRotation += 75; // 回転速度
-        document.getElementById('roulette-wheel').style.transform = `rotate(${currentRotation}deg)`;
-    }, 100);
-});
-
-// ストップボタン処理
-document.getElementById('stop-roulette').addEventListener('click', () => {
-    clearInterval(spinInterval);
-    document.getElementById('start-roulette').disabled = false;
-    document.getElementById('stop-roulette').disabled = true;
-
-    // ランダムな停止位置を計算
-    const randomAngle = (currentRotation % 360) + Math.random() * 360;
-    const selectedSegment = Math.floor((randomAngle % 360) / 30); // 各セグメントの角度
-    const segments = document.querySelectorAll('.segment');
-    const selectedMultiplier = segments[selectedSegment].getAttribute('data-multiplier');
-
-    // 結果処理
-    const betAmount = parseInt(document.getElementById('roulette-bet').value);
-    let resultMessage;
-    if (selectedMultiplier > 0) {
-        const winnings = betAmount * selectedMultiplier;
-        resultMessage = `結果: ${winnings}円獲得！`;
-        updateMoney(winnings);
-    } else {
-        const loss = betAmount * Math.abs(selectedMultiplier);
-        resultMessage = `ハズレ！-${loss}円失いました。`;
-        updateMoney(-loss);
-    }
-    document.getElementById('roulette-result').textContent = resultMessage;
-});
-
-        // デバッグコード入力
         document.getElementById('debugger').addEventListener('input', (e) => {
             if (e.target.value === '12345') {
                 updateMoney(10000);
@@ -609,6 +636,7 @@ document.getElementById('stop-roulette').addEventListener('click', () => {
             }
         });
 
+        displayStockPrices();
         updateAverageStockPrice('stockA');
         updateAverageStockPrice('stockB');
         updateAverageStockPrice('stockC');
